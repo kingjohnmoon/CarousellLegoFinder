@@ -27,14 +27,15 @@ class CarousellScraper:
     # This method closes any pop-up that appears on the page.
     def close_popup(self):
         try:
+            # Wait for the popup's close button to appear (new selector)
             close_btn = self.wait.until(
-                EC.element_to_be_clickable((By.CSS_SELECTOR, "button.D_rT.D_arh[aria-label='Close']"))
+                EC.element_to_be_clickable((By.CSS_SELECTOR, "button.D_rO.D_ari[aria-label='Close']"))
             )
             close_btn.click()
             # Wait for the popup to disappear
-            self.wait.until(EC.invisibility_of_element_located((By.CSS_SELECTOR, "button.D_rT.D_arh[aria-label='Close']")))
+            self.wait.until(EC.invisibility_of_element_located((By.CSS_SELECTOR, "button.D_rO.D_ari[aria-label='Close']")))
         except Exception:
-            pass
+            pass  # Popup did not appear or could not be closed
 
     # This method loads more results by clicking the "Show more results" button
     # until the specified number of pages is reached or no more results can be loaded.
@@ -65,15 +66,19 @@ class CarousellScraper:
                 card.find_element(By.XPATH, ".//p[normalize-space(text())='Brand new']")
             except:
                 continue
-            # Extract title and price from the card
-            # Note: The CSS selectors used here are specific to the Dark Mode of Carousell.
+            # Extract title from the product image alt (if available)
             try:
-                img = card.find_element(By.CSS_SELECTOR, "img.D_kC.D_XJ")
+                img = card.find_element(By.CSS_SELECTOR, "img.D_kb.D_Yh")
                 title = img.get_attribute("alt")
             except:
-                title = "N/A"
+                # Fallback: try to get the visible product title <p> (not seller, not 'Brand new', not price)
+                try:
+                    title = card.find_element(By.XPATH, ".//a[contains(@href, '/p/')]/p[contains(@class, 'D_kz') and contains(@class, 'D_kX') and contains(@class, 'D_kI')]" ).text.strip()
+                except:
+                    title = "N/A"
+            # Extract price
             try:
-                price = card.find_element(By.CSS_SELECTOR, "div.D_qN p").text.strip()
+                price = card.find_element(By.CSS_SELECTOR, "div.D_qI p").text.strip()
             except:
                 price = "N/A"
             results.append({"title": title, "price": price})
@@ -85,7 +90,8 @@ class CarousellScraper:
         self.close_popup()
         listing_cards = self.load_more_results()
         results = self.scrape_brand_new(listing_cards)
-        # Optionally print or process results here
+        # For debugging purposes, you can uncomment the line below to keep the browser open
+        # input("Press Enter to close the browser...")
         self.driver.quit()
         return results
 
