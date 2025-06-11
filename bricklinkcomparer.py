@@ -12,10 +12,9 @@ class BrickLinkComparer:
         self.products = products
 
     def clean_products(self):
-        # Clean the product titles and prices, and extract code from title.
+        # Clean the product titles, and extract code from title.
         for product in self.products:
             product['title'] = product['title'].strip().lower()
-            product['price'] = float(product['price'].replace('S$', '').replace(',', '').strip())
             # Extract the first number code (at least 3 digits) from the title
             match = re.search(r'\b(\d{3,})\b', product['title'])
             product['code'] = match.group(1) if match else None
@@ -55,7 +54,13 @@ class BrickLinkComparer:
                 summary_table = first_td.find_element(By.CSS_SELECTOR, "table.pcipgSummaryTable")
                 # Get the 4th row, 2nd column <b> (Avg Price)
                 avg_price_cell = summary_table.find_element(By.CSS_SELECTOR, "tr:nth-child(4) td:nth-child(2) b")
-                product['bricklink_price'] = avg_price_cell.text.strip()
+                price_text = avg_price_cell.text.strip()
+                # Convert BrickLink price to float (remove currency symbols, commas, etc.)
+                try:
+                    price_float = float(re.sub(r'[^\d.]', '', price_text))
+                except Exception:
+                    price_float = None
+                product['bricklink_price'] = price_float
             except Exception:
                 product['bricklink_price'] = None
         driver.quit()

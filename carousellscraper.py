@@ -73,14 +73,15 @@ class CarousellScraper:
             except:
                 # Fallback: try to get the visible product title <p> (not seller, not 'Brand new', not price)
                 try:
-                    title = card.find_element(By.XPATH, ".//a[contains(@href, '/p/')]/p[contains(@class, 'D_kz') and contains(@class, 'D_kX') and contains(@class, 'D_kI')]" ).text.strip()
+                    title = card.find_element(By.XPATH, ".//a[contains(@href, '/p/')]/p[contains(@class, 'D_kz') and contains(@class, 'D_kX') and contains(@class, 'D_kI')]").text.strip()
                 except:
                     title = "N/A"
-            # Extract price
+            # Extract price as float
             try:
-                price = card.find_element(By.CSS_SELECTOR, "div.D_qI p").text.strip()
+                price_text = card.find_element(By.CSS_SELECTOR, "div.D_qI p").text.strip()
+                price = float(price_text.replace('S$', '').replace(',', '').strip())
             except:
-                price = "N/A"
+                price = None
             results.append({"title": title, "price": price})
         return results
 
