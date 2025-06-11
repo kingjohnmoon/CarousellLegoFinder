@@ -3,9 +3,9 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-import time
 
-class CarousellLegoScraper:
+
+class CarousellScraper:
     def __init__(self, num_pages=1):
         self.num_pages = num_pages
         self.driver = webdriver.Chrome()
@@ -13,7 +13,8 @@ class CarousellLegoScraper:
 
     def open_carousell(self):
         self.driver.get("https://www.carousell.sg/")
-        time.sleep(3)
+        # Wait for the search box to be present
+        self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "input[placeholder='Search for an item']")))
 
     # This method searches for a given query on Carousell
     # and waits for the results to load.
@@ -30,7 +31,8 @@ class CarousellLegoScraper:
                 EC.element_to_be_clickable((By.CSS_SELECTOR, "button.D_rT.D_arh[aria-label='Close']"))
             )
             close_btn.click()
-            time.sleep(0.5)
+            # Wait for the popup to disappear
+            self.wait.until(EC.invisibility_of_element_located((By.CSS_SELECTOR, "button.D_rT.D_arh[aria-label='Close']")))
         except Exception:
             pass
 
@@ -58,10 +60,13 @@ class CarousellLegoScraper:
     def scrape_brand_new(self, listing_cards):
         results = []
         for card in listing_cards:
+            # Select for 'Brand new' listings only
             try:
                 card.find_element(By.XPATH, ".//p[normalize-space(text())='Brand new']")
             except:
                 continue
+            # Extract title and price from the card
+            # Note: The CSS selectors used here are specific to the Dark Mode of Carousell.
             try:
                 img = card.find_element(By.CSS_SELECTOR, "img.D_kC.D_XJ")
                 title = img.get_attribute("alt")
@@ -78,16 +83,16 @@ class CarousellLegoScraper:
         self.open_carousell()
         self.search(query)
         self.close_popup()
-        listing_cards = self.driver.find_elements(By.CSS_SELECTOR, "div[data-testid^='listing-card-']")
         listing_cards = self.load_more_results()
         results = self.scrape_brand_new(listing_cards)
         # Optionally print or process results here
         self.driver.quit()
         return results
 
+
 # Example usage:
 if __name__ == "__main__":
-    scraper = CarousellLegoScraper(5)  # Set the number of 'Brand new' listings to scrape here
+    scraper = CarousellScraper(5)  # Set the number of 'Brand new' listings to scrape here
     results = scraper.run()
     for item in results:
         print(f"Title: {item['title']}, Price: {item['price']}")
