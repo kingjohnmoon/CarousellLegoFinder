@@ -27,13 +27,16 @@ class CarousellScraper:
     # This method closes any pop-up that appears on the page.
     def close_popup(self):
         try:
-            # Wait for the popup's close button to appear (new selector)
-            close_btn = self.wait.until(
-                EC.element_to_be_clickable((By.CSS_SELECTOR, "button.D_rO.D_ari[aria-label='Close']"))
+            # Wait for the popup with role="dialog" to appear
+            popup = self.wait.until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, '[role="dialog"]'))
             )
+            # Now find the close button inside this popup
+            close_btn = popup.find_element(By.CSS_SELECTOR, "button[aria-label='Close']")
+            self.wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, '[role="dialog"] button[aria-label="Close"]')))
             close_btn.click()
             # Wait for the popup to disappear
-            self.wait.until(EC.invisibility_of_element_located((By.CSS_SELECTOR, "button.D_rO.D_ari[aria-label='Close']")))
+            self.wait.until(EC.invisibility_of_element_located((By.CSS_SELECTOR, '[role="dialog"]')))
         except Exception:
             pass  # Popup did not appear or could not be closed
 
@@ -44,6 +47,8 @@ class CarousellScraper:
         for i in range(self.num_pages):
             try:
                 show_more_btn = self.wait.until(
+                # We use XPATH here to ensure we are clicking the correct button
+                # Can't use CSS Selector because we are looking for a button with specific text
                     EC.element_to_be_clickable((By.XPATH, "//button[normalize-space(text())='Show more results']"))
                 )
                 old_count = len(listing_cards)
@@ -66,19 +71,17 @@ class CarousellScraper:
                 card.find_element(By.XPATH, ".//p[normalize-space(text())='Brand new']")
             except:
                 continue
-            # Extract title from the product image alt (if available)
+            # Extract title from the product image alt
             try:
-                img = card.find_element(By.CSS_SELECTOR, "img.D_kb.D_Yh")
+                img = card.find_element(By.XPATH, ".//img[@alt and not(@alt='Avatar')]")
                 title = img.get_attribute("alt")
             except:
-                # Fallback: try to get the visible product title <p> (not seller, not 'Brand new', not price)
-                try:
-                    title = card.find_element(By.XPATH, ".//a[contains(@href, '/p/')]/p[contains(@class, 'D_kz') and contains(@class, 'D_kX') and contains(@class, 'D_kI')]").text.strip()
-                except:
-                    title = "N/A"
+                title = "N/A"
             # Extract price as float
             try:
-                price_text = card.find_element(By.CSS_SELECTOR, "div.D_qI p").text.strip()
+                price_text = card.find_element(
+                    By.XPATH, ".//p[starts-with(normalize-space(text()), 'S$')]"
+                ).text.strip()
                 price = float(price_text.replace('S$', '').replace(',', '').strip())
             except:
                 price = None

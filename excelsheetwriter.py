@@ -1,5 +1,6 @@
 import openpyxl
 from openpyxl.utils import get_column_letter
+from openpyxl.styles import PatternFill
 from carousellscraper import CarousellScraper
 from bricklinkcomparer import BrickLinkComparer
 
@@ -19,9 +20,9 @@ class ExcelSheetWriter:
         for product in self.products:
             ws.append([
                 product.get("title", ""),
-                product.get("price", 0.0),  # price is now a float
+                product.get("price", 0.0),
                 product.get("code", ""),
-                product.get("bricklink_price", 0.0)  # bricklink_price is now a float
+                product.get("bricklink_price", 0.0)
             ])
         # Auto-size columns
         for col in ws.columns:
@@ -34,13 +35,30 @@ class ExcelSheetWriter:
                 except Exception:
                     pass
             ws.column_dimensions[col_letter].width = max_length + 2
+        # Apply conditional formatting to Carousell Price column (column B)
+
+        for row in range(2, ws.max_row + 1):
+            carousell_price = ws[f'B{row}'].value
+            bricklink_price = ws[f'D{row}'].value
+            if carousell_price is None or bricklink_price is None:
+                continue
+            try:
+                diff = bricklink_price - carousell_price
+                if diff < 0:
+                    ws[f'B{row}'].fill = PatternFill(start_color="FFC7CE", end_color="FFC7CE", fill_type="solid")  # Red
+                elif diff < 50:
+                    ws[f'B{row}'].fill = PatternFill(start_color="FFEB9C", end_color="FFEB9C", fill_type="solid")  # Yellow
+                else:
+                    ws[f'B{row}'].fill = PatternFill(start_color="C6EFCE", end_color="C6EFCE", fill_type="solid")  # Green
+            except Exception:
+                pass
         wb.save(self.filename)
         print(f"Excel file saved as {self.filename}")
 
 
 if __name__ == "__main__":
     # Scrape products from Carousell
-    scraper = CarousellScraper(0)  # Set the number of 'Brand new' listings to scrape here
+    scraper = CarousellScraper(1)  # Set the number of 'Brand new' listings to scrape here
     products = scraper.run("lego")
     
     # Compare with BrickLink prices
