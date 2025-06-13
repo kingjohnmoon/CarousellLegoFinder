@@ -34,9 +34,9 @@ class ExcelSheetWriter:
                         max_length = len(str(cell.value))
                 except Exception:
                     pass
-            ws.column_dimensions[col_letter].width = max_length + 2
-        # Apply conditional formatting to Carousell Price column (column B)
+            ws.column_dimensions[col_letter].width = max_length + 2 
 
+        # Apply conditional formatting to Carousell Price column (column B)
         for row in range(2, ws.max_row + 1):
             carousell_price = ws[f'B{row}'].value
             bricklink_price = ws[f'D{row}'].value

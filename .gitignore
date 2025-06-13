@@ -1,0 +1,8 @@
+# Python cache
+__pycache__/
+
+# Environment files
+.venv/
+
+# Any Excel files created by the script
+*.xlsx

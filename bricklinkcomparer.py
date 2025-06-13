@@ -48,7 +48,7 @@ class BrickLinkComparer:
                 price_row = wait.until(
                     EC.presence_of_element_located((By.CSS_SELECTOR, "tr[style*='background-color: #C0C0C0']"))
                 )
-                # Find the first td in that row
+                # Find the first td in that row (we want the table for last 6 months, brand new sets)
                 first_td = price_row.find_element(By.CSS_SELECTOR, "td")
                 # Find the first summary table inside that td
                 summary_table = first_td.find_element(By.CSS_SELECTOR, "table.pcipgSummaryTable")
